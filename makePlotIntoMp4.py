@@ -11,7 +11,7 @@ def get_file_creation_time(file_path):
 
 def converter():
         # Folder path containing the images
-    folder_path = 'C:/Users/GraphicsCard/python script/tempPNG'
+    folder_path = 'C:/Users/ycche/python script/SLM/SLM_program/tempPNG'
     
     # List to store image file names
     image_files = []
