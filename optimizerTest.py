@@ -58,6 +58,7 @@ differences = target_tf - intf
 squaredDifferences = tf.square(differences)
 meanSquaredDifferences = tf.reduce_mean(squaredDifferences)
 cost = tf.reduce_sum(squaredDifferences)
+cost_values = [cost] # save for plot, nothing special
 
 '''
 =============================optimization parameters=======================================
@@ -65,15 +66,16 @@ cost = tf.reduce_sum(squaredDifferences)
 DOE_tf = tf.math.real(DOE_tf)
 variables = tf.Variable(DOE_tf)
 learning_rate=0.05
-costType = 1
+costType = 2
 optimizer = tf.optimizers.Adam(learning_rate)
 pp = 2 # power of cost function
 '''
 ===================================================================
 '''
 
-cost_values = [cost]
 
+'''
+============================ Inception base processing ==================
 
 # Preprocess the target and initial profiles
 preprocessed_target = preprocess_input(target)
@@ -98,33 +100,30 @@ initial_features = base_model(preprocessed_initial_rgb)
 # Compute the difference between target and initial features
 feature_difference = tf.reduce_mean(tf.square(target_features - initial_features))
 
-
+======================= no evident contribution ====================
+'''
 
 def costFn (variables):
     # Pad the tensor to handle boundaries
     padded_tensor = tf.pad(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))), [[2, 2], [2, 2]])  # Pad with 2 extra rows and columns
-
+    
     input_tensor = tf.constant(padded_tensor)  # Your 500x500 tensor
-
+    
     # Select the center element and adjacent elements
     center_elements = input_tensor[1:-1, 1:-1]
     up_elements = input_tensor[:-2, 1:-1]
     down_elements = input_tensor[2:, 1:-1]
     left_elements = input_tensor[1:-1, :-2]
     right_elements = input_tensor[1:-1, 2:]
-    
-    
-    
+      
     # Calculate the squared difference between center element and adjacent elements
-    squaredDiff = tf.reduce_sum(tf.square(center_elements - up_elements) + tf.square(center_elements - down_elements) + tf.square(center_elements - left_elements) + tf.square(center_elements - right_elements))
+    squaredDiff = tf.square(center_elements - up_elements) + tf.square(center_elements - down_elements) + tf.square(center_elements - left_elements) + tf.square(center_elements - right_elements)
     
     # Sum up the squared differences for all elements
-   
+       
     smoothnessInfo = tf.reduce_sum(squaredDiff)
-    smoothnessInfo += feature_difference
-    return smoothnessInfo
-
-
+    # smoothnessInfo += feature_difference
+    return smoothnessInfo, squaredDiff
 
 plt.figure()
 
@@ -138,11 +137,10 @@ for i in range(num_iterations):
         if costType == 1:
             cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))),pp))
             print (cost)
-            cost += feature_difference            
-            
-            
+            # cost += feature_difference            
+                        
         elif costType == 2:
-            cost = costFn(variables)
+            cost, squaredDiff = costFn(variables)
                         
     gradients = tape.gradient(cost, variables)
     gradients = tf.reshape(gradients,(N,N))
@@ -160,9 +158,14 @@ for i in range(num_iterations):
 
     # Plot the image
     plt.subplot(122)
+    # show training Tophat
+    # plt.imshow(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))))
+    
+    # inspect smoother 
     plt.imshow(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))))
-    plt.title('Image')
-
+    plt.title('Training Data')
+    plt.axis('image')
+    plt.colorbar(shrink=0.5)
     # Display the plot
     display.clear_output(wait=True)
     display.display(plt.gcf())
@@ -175,3 +178,4 @@ for i in range(num_iterations):
 
 # Close the plot after the optimization is complete
 plt.close()
+plt.imsave('training data.png',10*tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))))

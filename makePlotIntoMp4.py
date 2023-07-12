@@ -11,7 +11,7 @@ def get_file_creation_time(file_path):
     
 
     # Folder path containing the images
-folder_path = 'C:/git repo/python script/tempPNG'
+folder_path = 'C:/git repo/SLM_program/tempPNG'
 
 # List to store image file names
 image_files = []

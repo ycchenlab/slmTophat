@@ -36,7 +36,7 @@ target /= np.max(target)  # Normalize matrix
 # Defining DOE phase
 DOE = np.load('DOE_data.npy')
 
-s = 30
+s = 3
 
 # Create an empty list to store frames
 frames = []
@@ -105,7 +105,7 @@ for t in range(s):
     plt.title('Training Tophat')
     plt.annotate(text, xy=(0.05, 0.8), xycoords='axes fraction', color='white', fontsize=7, weight='bold')
     # Save the figure as an image    
-    save_path = r'C:\git repo\python script\tempPNG\\'
+    save_path = r'C:\git repo\SLM_program\tempPNG\\'
     filename = f'plot_{t}.png'
     plt.savefig(save_path + filename, dpi = 300)
     # Convert the plot to an image array

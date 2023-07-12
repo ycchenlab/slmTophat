@@ -83,9 +83,9 @@ def costfunction(DOE, target, initial_profile, N, t, LR, costType):
             # consider nearest neighbor 
                 cost = costFnSmoothing(variables)
                 
-            elif costType==3:
-                # use the most recent paper
-                cost = 
+            # elif costType==3:
+            #     # use the most recent paper
+            #     cost = 
         
                         
             gradients = tape.gradient(cost, variables)
@@ -117,7 +117,7 @@ def get_file_creation_time(file_path):
 
 def converter():
         # Folder path containing the images
-    folder_path = 'C:/git repo/python script/tempPNG'
+    folder_path = 'C:/git repo/SLM_program/tempPNG'
     
     # List to store image file names
     image_files = []
