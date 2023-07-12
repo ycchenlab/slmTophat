@@ -102,7 +102,7 @@ for t in range(s):
     plt.title('Squared Differences')
     plt.annotate(text, xy=(0.05, 0.8), xycoords='axes fraction', color='white', fontsize=7, weight='bold')
     # Save the figure as an image    
-    save_path = r'C:\Users\GraphicsCard\python script\tempPNG\\'
+    save_path = r'C:\Users\ycche\python script\SLM\SLM_program\tempPNG\\'
     filename = f'plot_{t}.png'
     plt.savefig(save_path + filename, dpi = 300)
     # Convert the plot to an image array

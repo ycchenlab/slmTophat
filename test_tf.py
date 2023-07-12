@@ -2,6 +2,14 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 from IPython import display
+from tensorflow.keras.applications import InceptionV3
+
+
+# Load the pretrained InceptionV3 model
+base_model = InceptionV3(weights='imagenet', include_top=False)
+
+# Freeze the weights of the pretrained model
+base_model.trainable = False
 
 
 
@@ -52,22 +60,46 @@ cost = tf.reduce_sum(squaredDifferences)
 
 DOE_tf = tf.math.real(DOE_tf)
 variables = tf.Variable(DOE_tf)
-learning_rate=0.1
+learning_rate=0.01
 optimizer = tf.optimizers.Adam(learning_rate)
+
 cost_values = [cost]
 
+pp = 4 # power of cost function
+
+# Pad the tensor to handle boundaries
+padded_tensor = tf.pad(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))), [[2, 2], [2, 2]])  # Pad with 2 extra rows and columns
+
+input_tensor = tf.constant(padded_tensor)  # Your 500x500 tensor
+
+# Select the center element and adjacent elements
+center_elements = input_tensor[1:-1, 1:-1]
+up_elements = input_tensor[:-2, 1:-1]
+down_elements = input_tensor[2:, 1:-1]
+left_elements = input_tensor[1:-1, :-2]
+right_elements = input_tensor[1:-1, 2:]
+
+# Calculate the squared difference between center element and adjacent elements
+squared_diff = tf.reduce_sum(tf.square(center_elements - up_elements) + tf.square(center_elements - down_elements) + tf.square(center_elements - left_elements) + tf.square(center_elements - right_elements))
+# Sum up the squared differences for all elements
+smoothness_info = tf.reduce_sum(squared_diff)
+
+# Print the smoothness information
+result = smoothness_info.numpy()
+print(result)
 
 plt.figure()
 
-
-num_iterations = 100
+num_iterations = 20
 for i in range(num_iterations):
 
     # Compute the gradient using tf.GradientTape
     with tf.GradientTape() as tape:
         tape.watch(variables)
-        cost = tf.reduce_sum(tf.square(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64)))))))
 
+        #cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))),pp))
+        cost = result
+        
     gradients = tape.gradient(cost, variables)
 
     gradients = tf.reshape(gradients,(N,N))
@@ -98,5 +130,3 @@ for i in range(num_iterations):
 
 # Close the plot after the optimization is complete
 plt.close()
-
-

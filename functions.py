@@ -30,6 +30,7 @@ def costfunction(DOE, target, initial_profile, N, t):
     num_iterations = 30
     for i in range(num_iterations):
     
+
         # Compute the gradient using tf.GradientTape
         with tf.GradientTape() as tape:
             tape.watch(variables)
@@ -38,6 +39,22 @@ def costfunction(DOE, target, initial_profile, N, t):
             
             # consider nearest neighbor 
            # cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))), pp))
+
+        num_iterations = 30
+        for i in range(num_iterations):
+        
+            # Compute the gradient using tf.GradientTape
+            with tf.GradientTape() as tape:
+                tape.watch(variables)
+                pp = 4 # power of cost function
+                cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))), pp))
+                
+                # consider nearest neighbor 
+               # cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))), pp))
+        
+            gradients = tape.gradient(cost, variables)
+            gradients = tf.reshape(gradients,(N,N))
+
     
         gradients = tape.gradient(cost, variables)
         gradients = tf.reshape(gradients,(N,N))
