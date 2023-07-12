@@ -117,7 +117,7 @@ def costFn (variables):
     right_elements = input_tensor[1:-1, 2:]
       
     # Calculate the squared difference between center element and adjacent elements
-    squaredDiff = tf.square(center_elements - up_elements) + tf.square(center_elements - down_elements) + tf.square(center_elements - left_elements) + tf.square(center_elements - right_elements)
+    squaredDiff = tf.square(tf.square(center_elements) - tf.square(up_elements)) + tf.square(tf.square(center_elements) - tf.square(down_elements)) + tf.square(tf.square(center_elements) - tf.square(left_elements)) + tf.square(tf.square(center_elements) - tf.square(right_elements))
     
     # Sum up the squared differences for all elements
        
@@ -134,13 +134,15 @@ for i in range(num_iterations):
     with tf.GradientTape() as tape:
         tape.watch(variables)
         
-        if costType == 1:
-            cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))),pp))
-            print (cost)
+        if i%2 == 1:
+            cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))),pp+2))
             # cost += feature_difference            
                         
-        elif costType == 2:
-            cost, squaredDiff = costFn(variables)
+        else :
+            # costType == 2:
+            # cost, squaredDiff = costFn(variables)
+            cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))),pp))
+
                         
     gradients = tape.gradient(cost, variables)
     gradients = tf.reshape(gradients,(N,N))
@@ -178,4 +180,4 @@ for i in range(num_iterations):
 
 # Close the plot after the optimization is complete
 plt.close()
-plt.imsave('training data.png',10*tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))))
+plt.imsave('training data-4.png',10*tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))))
