@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy.fft import fft2, ifft2
 from functions import costfunction
-from makePlotIntoMp4 import converter
+from functions import converter
 import tensorflow as tf
 import imageio
 import time
@@ -34,9 +34,10 @@ initial_profile = np.exp(-((R/w0)**2))
 target /= np.max(target)  # Normalize matrix
 
 # Defining DOE phase
-DOE = 2 * np.pi * np.random.rand(N, N)
+DOE = np.load('DOE_data.npy')
 
-s = 3
+s = 30
+
 # Create an empty list to store frames
 frames = []
 
@@ -69,7 +70,9 @@ for t in range(s):
     
     ############################ Optimization funciton
     
-    cost, DOE_tf, learning_rate, optimizer_string = costfunction(DOE, target, initial_profile, N,t)
+    learning_rate=1
+    costType = 1 # costType: 1 = simple cost function, 2 = smoothing neighbor pixels
+    cost, DOE_tf, learning_rate, optimizer_string = costfunction(DOE, target, initial_profile, N,t,learning_rate, costType)
     DOE = DOE_tf.numpy() 
 
     rmse = np.sqrt(meanSquaredDifferences)
@@ -94,15 +97,15 @@ for t in range(s):
     # Plot squared differences and save the figure as an image
     plt.figure(dpi=300)
     fig, ax = plt.subplots(figsize=(6, 6))
-    plt.imshow(squaredDifferences, cmap='jet')
+    plt.imshow(intf, cmap='jet')
     plt.axis('image')
     plt.colorbar()
     plt.xlabel('x coordinate')
     plt.ylabel('y coordinate')
-    plt.title('Squared Differences')
+    plt.title('Training Tophat')
     plt.annotate(text, xy=(0.05, 0.8), xycoords='axes fraction', color='white', fontsize=7, weight='bold')
     # Save the figure as an image    
-    save_path = r'C:\Users\ycche\python script\SLM\SLM_program\tempPNG\\'
+    save_path = r'C:\git repo\python script\tempPNG\\'
     filename = f'plot_{t}.png'
     plt.savefig(save_path + filename, dpi = 300)
     # Convert the plot to an image array
@@ -119,9 +122,9 @@ for t in range(s):
 
 # End of iteration
 
-# Save the frames as a GIF
-# imageio.mimsave('optimization animation.gif', frames, duration=1)
 
+# save DOE data for next time use
+np.save('DOE_data.npy', DOE)
 
 # Save the frames as mp4
 converter()
