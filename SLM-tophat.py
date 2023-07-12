@@ -36,7 +36,7 @@ target /= np.max(target)  # Normalize matrix
 # Defining DOE phase
 DOE = 2 * np.pi * np.random.rand(N, N)
 
-s = 30
+s = 3
 # Create an empty list to store frames
 frames = []
 
