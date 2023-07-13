@@ -22,7 +22,7 @@ A = 100  # Super-Gaussian amplitude
 w0 = L/6  # Super-Gaussian width
 
 # Generate super-Gaussian profile
-target = A * np.exp(-(np.abs(X)/w0)**(2*m)) * np.exp(-(np.abs(Y)/(w0/4))**(2*m))
+target = np.square(A * np.exp(-(np.abs(X)/w0)**(2*m)) * np.exp(-(np.abs(Y)/(w0/4))**(2*m)))
 
 # Gaussian beam parameters
 w0 = L/6  # Gaussian beam waist radius
@@ -36,7 +36,7 @@ target /= np.max(target)  # Normalize matrix
 # Defining DOE phase
 DOE = np.load('DOE_data.npy')
 
-s = 3
+s = 30
 
 # Create an empty list to store frames
 frames = []
@@ -52,7 +52,7 @@ for t in range(s):
 
 ####################    # Forward iteration
     iterf = fft2(initial_profile * DOEphase)
-    intf = np.abs(iterf) / np.max(np.abs(iterf))
+    intf = np.square(np.abs(iterf) / np.max(np.abs(iterf)))
     angf = np.angle(iterf)
     A = target * np.exp(1j * angf)
 
@@ -85,7 +85,6 @@ for t in range(s):
     end_time = time.time()
     # Calculate the elapsed time
     elapsed_time = end_time - start_time    
-
 
     # Text for Optimazation   
     text = f'Iteration: {t+1}\nLearning Rate: {learning_rate}\nRMSE: {round(rmse, 4)}\nOptimizer: {optimizer_string}\nElapsed time: {round(elapsed_time, 2)} seconds'
@@ -125,6 +124,7 @@ for t in range(s):
 
 # save DOE data for next time use
 np.save('DOE_data.npy', DOE)
+plt.imsave('DOE.png', DOE, cmap='gray')
 
 # Save the frames as mp4
 converter()

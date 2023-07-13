@@ -2,18 +2,18 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 from IPython import display
-from tensorflow.keras.applications import InceptionV3
-from tensorflow.keras.applications.inception_v3 import preprocess_input
+# from tensorflow.keras.applications import InceptionV3
+# from tensorflow.keras.applications.inception_v3 import preprocess_input
 
 
-# Load the pretrained InceptionV3 model
-base_model = InceptionV3(weights='imagenet', include_top=False)
+# # Load the pretrained InceptionV3 model
+# base_model = InceptionV3(weights='imagenet', include_top=False)
 
-# Freeze the weights of the pretrained model
-base_model.trainable = False
+# # Freeze the weights of the pretrained model
+# base_model.trainable = False
 
-# Define the layer name for intermediate feature extraction
-layer_name = 'mixed7'  # Example: using mixed7 layer
+# # Define the layer name for intermediate feature extraction
+# layer_name = 'mixed7'  # Example: using mixed7 layer
 
 # Loading the target image
 # Create grid
@@ -113,7 +113,7 @@ def costFn (variables):
     center_elements = input_tensor[1:-1, 1:-1]
     up_elements = input_tensor[:-2, 1:-1]
     down_elements = input_tensor[2:, 1:-1]
-    left_elements = input_tensor[1:-1, :-2]
+    left_elements = input_tensor[1:-1, :-2]                         
     right_elements = input_tensor[1:-1, 2:]
       
     # Calculate the squared difference between center element and adjacent elements
@@ -125,6 +125,23 @@ def costFn (variables):
     # smoothnessInfo += feature_difference
     return smoothnessInfo, squaredDiff
 
+
+def costFn2017(variables):
+    
+    d = 4
+    base = tf.constant(10, dtype=tf.float32)
+    exponent = tf.constant(d, dtype=tf.float32)
+    sqrtIT = tf.sqrt(target_tf*tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))))
+    # cosPhi = tf.math.cos(-1*variables)
+    cosPhi = 1
+    sumUp = tf.reduce_sum(sqrtIT*cosPhi)
+    preCost = tf.square(1-sumUp)
+    result = tf.pow(base, exponent)*preCost
+
+    # result = tf.pow(base,exponent)*tf.square(1 - tf.reduce_sum(tf.math.cos(-1*variables)*tf.sqrt(target_tf*tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))))))
+
+    return result
+
 plt.figure()
 
 num_iterations = 100
@@ -134,17 +151,20 @@ for i in range(num_iterations):
     with tf.GradientTape() as tape:
         tape.watch(variables)
         
-        if i%2 == 1:
-            cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))),pp+2))
-            # cost += feature_difference            
+        # if i%2 == 1:
+        #     cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))),pp+2))
+        #     # cost += feature_difference            
                         
-        else :
-            # costType == 2:
-            # cost, squaredDiff = costFn(variables)
-            cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))),pp))
+        # else :
+        #     # costType == 2:
+        #     # cost, squaredDiff = costFn(variables)
+        #     cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))),pp))
 
+        cost = costFn2017(variables)
+           
                         
     gradients = tape.gradient(cost, variables)
+    
     gradients = tf.reshape(gradients,(N,N))
 
     # Clear previous plot and update the current plot
@@ -161,8 +181,7 @@ for i in range(num_iterations):
     # Plot the image
     plt.subplot(122)
     # show training Tophat
-    # plt.imshow(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))))
-    
+
     # inspect smoother 
     plt.imshow(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))))
     plt.title('Training Data')

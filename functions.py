@@ -29,6 +29,7 @@ def costfunction(DOE, target, initial_profile, N, t, LR, costType):
     variables = tf.Variable(DOE_tf)
     learning_rate=LR
     optimizer = tf.optimizers.Adadelta(learning_rate)
+    pp=2
     
     
     def costFnSmoothing (variables):
@@ -47,14 +48,14 @@ def costfunction(DOE, target, initial_profile, N, t, LR, costType):
         
         
         # Calculate the squared difference between center element and adjacent elements
-        squaredDiff = tf.reduce_sum(tf.square(center_elements - up_elements) + tf.square(center_elements - down_elements) + tf.square(center_elements - left_elements) + tf.square(center_elements - right_elements))
+        squaredDiff = tf.square(tf.square(center_elements) - tf.square(up_elements)) + tf.square(tf.square(center_elements) - tf.square(down_elements)) + tf.square(tf.square(center_elements) - tf.square(left_elements)) + tf.square(tf.square(center_elements) - tf.square(right_elements))
         
         # Sum up the squared differences for all elements
-        
+           
         smoothnessInfo = tf.reduce_sum(squaredDiff)
-        return smoothnessInfo
-
-    
+        # smoothnessInfo += feature_difference
+        return smoothnessInfo, squaredDiff
+        
     def costFnEfficient (variables):
         
         
@@ -74,18 +75,33 @@ def costfunction(DOE, target, initial_profile, N, t, LR, costType):
         # Compute the gradient using tf.GradientTape
         with tf.GradientTape() as tape:
             tape.watch(variables)
+            
+            if i%2 == 1:
+                cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))),pp))
+                # cost += feature_difference            
+                            
+            else :
+                # costType == 2:
+                cost, squaredDiff = costFnSmoothing(variables)
+                # cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))),pp))
+
+
+
+        # # Compute the gradient using tf.GradientTape
+        # with tf.GradientTape() as tape:
+        #     tape.watch(variables)
         
-            if costType==1:
-                cost = costFnSimple(variables)
+        #     if costType==1:
+        #         cost = costFnSimple(variables)
             
             
-            elif costType==2:
-            # consider nearest neighbor 
-                cost = costFnSmoothing(variables)
+        #     elif costType==2:
+        #     # consider nearest neighbor 
+        #         cost = costFnSmoothing(variables)
                 
-            # elif costType==3:
-            #     # use the most recent paper
-            #     cost = 
+        #     # elif costType==3:
+        #     #     # use the most recent paper
+        #     #     cost = 
         
                         
             gradients = tape.gradient(cost, variables)
