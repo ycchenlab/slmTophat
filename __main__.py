@@ -10,6 +10,8 @@ import os
 import shutil
 
 
+# ===================================== Parameters config ===============================================
+
 # Loading the target image
 # Create grid
 N = 500  # Number of grid points
@@ -17,6 +19,7 @@ L = 1  # Grid size
 x = np.linspace(-L/2, L/2, N)
 y = np.linspace(-L/2, L/2, N)
 X, Y = np.meshgrid(x, y)
+
 
 # Super-Gaussian profile parameters
 m = 16  # Super-Gaussian exponent
@@ -43,6 +46,11 @@ s = 30
 # Create an empty list to store frames
 frames = []
 
+# costType: 1 = simple cost function(Ct2), 2 = smoothing neighbor pixels(Cs), 3 = alternating Ct4 / Cs, 4 = alternating Ct2 / Cs, 5 = Ct4 / Ct2
+costType = 1
+learning_rate=0.01
+
+# ===================================== Parameters config ===============================================
 
 # conjugate gradient method algorithm
 # Iterate to calculate the phase value
@@ -71,10 +79,7 @@ for t in range(s):
     
     ############################ Optimization funciton
     
-    learning_rate=1
-    
-    # costType: 1 = simple cost function(Ct2), 2 = smoothing neighbor pixels(Cs), 3 = alternating Ct4 / Cs, 4 = alternating Ct2 / Cs, 5 = Ct4 / Ct2
-    costType = 5
+
     cost, DOE_tf, learning_rate, optimizer_string = costfunction(DOE, target, initial_profile, N,t,learning_rate, costType)
     DOE = DOE_tf.numpy() 
 

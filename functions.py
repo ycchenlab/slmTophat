@@ -28,7 +28,7 @@ def costfunction(DOE, target, initial_profile, N, t, LR, costType):
     DOE_tf = tf.math.real(DOE_tf)
     variables = tf.Variable(DOE_tf)
     learning_rate=LR
-    optimizer = tf.optimizers.Adadelta(learning_rate)
+    optimizer = tf.optimizers.SGD(learning_rate)
     
     
     def costFnSmoothing (variables):
