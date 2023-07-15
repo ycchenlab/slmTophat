@@ -16,8 +16,8 @@ def costfunction(DOE, target, initial_profile, N, t, LR, costType):
     initial_profile_tf = tf.convert_to_tensor(initial_profile, dtype=tf.complex64)
     DOEphase = tf.exp(complex_one * tf.cast(DOE_tf, tf.complex64))
 
-    iterf = tf.signal.fft2d(initial_profile_tf * tf.cast(DOEphase, dtype=tf.complex64))
-    intf = tf.abs(iterf) / tf.reduce_max(tf.abs(iterf))
+    iterf = tf.signal.fft2d(initial_profile_tf * tf.cast(DOEphase, dtype=tf.complex64)) # training output electric field
+    intf = tf.abs(iterf) / tf.reduce_max(tf.abs(iterf)) # normalized training intensity 
     differences = target_tf - intf
     squaredDifferences = tf.square(differences)
     cost = tf.reduce_sum(squaredDifferences)
@@ -29,12 +29,11 @@ def costfunction(DOE, target, initial_profile, N, t, LR, costType):
     variables = tf.Variable(DOE_tf)
     learning_rate=LR
     optimizer = tf.optimizers.Adadelta(learning_rate)
-    pp=2
     
     
     def costFnSmoothing (variables):
         # Pad the tensor to handle boundaries
-        padded_tensor = tf.pad(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))), [[2, 2], [2, 2]])  # Pad with 2 extra rows and columns
+        padded_tensor = tf.pad(tf.square(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64)))))/ tf.reduce_max(tf.square(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64)))))), [[2, 2], [2, 2]])  # Pad with 2 extra rows and columns
 
         input_tensor = tf.constant(padded_tensor)  # Your 500x500 tensor
 
@@ -63,50 +62,54 @@ def costfunction(DOE, target, initial_profile, N, t, LR, costType):
     
 
     def costFnSimple (variables):
-        pp = 2 # power of cost function
-        cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))), pp))
+        cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.square(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64)))))/ tf.reduce_max(tf.square(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64)))))), pp))
 
         return cost
 
     num_iterations = 30
     for i in range(num_iterations):
     
-
         # Compute the gradient using tf.GradientTape
         with tf.GradientTape() as tape:
             tape.watch(variables)
-            
-            if i%2 == 1:
-                cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))),pp))
-                # cost += feature_difference            
-                            
-            else :
-                # costType == 2:
+        
+            # 1 = simple cost function(Ct2),           
+            if costType==1:
+                pp = 2
+                cost = costFnSimple(variables)
+                    
+            # 2 = smoothing neighbor pixels(Cs),            
+            elif costType==2:
                 cost, squaredDiff = costFnSmoothing(variables)
-                # cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))),pp))
+                             
+             # 3 = alternating Ct4 / Cs,      
+            elif costType==3:
+                if i%2 == 1:
+                    pp = 4    
+                    cost = costFnSimple(variables)               
+                else:
+                    cost, squaredDiff = costFnSmoothing(variables)
 
+            # 4 = alternating Ct2 / Cs, 
+            elif costType==4:
+                if i%2 == 1:
+                    pp = 4    
+                    cost = costFnSimple(variables)               
+                else:
+                    cost, squaredDiff  = costFnSmoothing(variables)
 
-
-        # # Compute the gradient using tf.GradientTape
-        # with tf.GradientTape() as tape:
-        #     tape.watch(variables)
-        
-        #     if costType==1:
-        #         cost = costFnSimple(variables)
-            
-            
-        #     elif costType==2:
-        #     # consider nearest neighbor 
-        #         cost = costFnSmoothing(variables)
-                
-        #     # elif costType==3:
-        #     #     # use the most recent paper
-        #     #     cost = 
-        
+            # 5 = Ct4 / Ct2
+            elif costType==5:
+                if i%2 == 1:
+                    pp = 4    
+                    cost = costFnSimple(variables)               
+                else:
+                    pp = 2    
+                    cost = costFnSimple(variables)   
                         
             gradients = tape.gradient(cost, variables)
             gradients = tf.reshape(gradients,(N,N))
-
+            
     # Perform optimization
         optimizer.apply_gradients([(gradients, variables)])
         cost_values.append(cost.numpy())
@@ -133,7 +136,7 @@ def get_file_creation_time(file_path):
 
 def converter():
         # Folder path containing the images
-    folder_path = 'C:/git repo/SLM_program/tempPNG'
+    folder_path = 'C:/git repo/slmTophat/tempPNG'
     
     # List to store image file names
     image_files = []

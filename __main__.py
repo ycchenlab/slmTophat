@@ -7,6 +7,8 @@ import tensorflow as tf
 import imageio
 import time
 import os
+import shutil
+
 
 # Loading the target image
 # Create grid
@@ -21,13 +23,13 @@ m = 16  # Super-Gaussian exponent
 A = 100  # Super-Gaussian amplitude
 w0 = L/6  # Super-Gaussian width
 
-# Generate super-Gaussian profile
+# Generate super-Gaussian profile -- it is intensity
 target = np.square(A * np.exp(-(np.abs(X)/w0)**(2*m)) * np.exp(-(np.abs(Y)/(w0/4))**(2*m)))
 
 # Gaussian beam parameters
 w0 = L/6  # Gaussian beam waist radius
 
-# Calculate Gaussian beam profile
+# Calculate Gaussian beam profile -- it is electric field amplitude
 R = np.sqrt(X**2 + Y**2)  # Circular shape
 initial_profile = np.exp(-((R/w0)**2))
 
@@ -51,8 +53,8 @@ for t in range(s):
     DOEphase = np.exp(1j * DOE)
 
 ####################    # Forward iteration
-    iterf = fft2(initial_profile * DOEphase)
-    intf = np.square(np.abs(iterf) / np.max(np.abs(iterf)))
+    iterf = fft2(initial_profile * DOEphase) # field fft
+    intf = np.square(np.abs(iterf)) / np.max(np.square(np.abs(iterf))) # normalized training intenstiy
     angf = np.angle(iterf)
     A = target * np.exp(1j * angf)
 
@@ -60,8 +62,7 @@ for t in range(s):
     iterb = ifft2(A)
     angb = np.angle(iterb)
     DOE = angb
-    error = target - intf / np.max(intf)  # Calculate error
-    intf /= np.max(intf)
+    error = target - intf # Calculate error
     E = np.sum(np.abs(error)) / (N * N)
     differences = target - intf
     squaredDifferences = differences**2
@@ -71,7 +72,9 @@ for t in range(s):
     ############################ Optimization funciton
     
     learning_rate=1
-    costType = 1 # costType: 1 = simple cost function, 2 = smoothing neighbor pixels
+    
+    # costType: 1 = simple cost function(Ct2), 2 = smoothing neighbor pixels(Cs), 3 = alternating Ct4 / Cs, 4 = alternating Ct2 / Cs, 5 = Ct4 / Ct2
+    costType = 5
     cost, DOE_tf, learning_rate, optimizer_string = costfunction(DOE, target, initial_profile, N,t,learning_rate, costType)
     DOE = DOE_tf.numpy() 
 
@@ -104,7 +107,7 @@ for t in range(s):
     plt.title('Training Tophat')
     plt.annotate(text, xy=(0.05, 0.8), xycoords='axes fraction', color='white', fontsize=7, weight='bold')
     # Save the figure as an image    
-    save_path = r'C:\git repo\SLM_program\tempPNG\\'
+    save_path = r'C:\git repo\slmTophat\tempPNG\\'
     filename = f'plot_{t}.png'
     plt.savefig(save_path + filename, dpi = 300)
     # Convert the plot to an image array
@@ -116,7 +119,6 @@ for t in range(s):
 
     # Read the saved image as an array and add it to the frames list
 
-
     # Remove the saved image file
 
 # End of iteration
@@ -124,7 +126,17 @@ for t in range(s):
 
 # save DOE data for next time use
 np.save('DOE_data.npy', DOE)
-plt.imsave('DOE.png', DOE, cmap='gray')
+
+
+# Specify the source file path
+source_path = "C:/git repo/slmTophat/tempPNG/plot_29.png"  # Replace with the actual path of the source file
+
+# Specify the destination directory
+destination_directory = "C:/git repo/slmTophat/IntensityModifiedCostFunction/"  # Replace with the actual path of the destination directory
+
+# Copy the file
+shutil.copy(source_path, destination_directory)
+
 
 # Save the frames as mp4
 converter()

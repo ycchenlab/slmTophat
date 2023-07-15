@@ -25,11 +25,10 @@ X, Y = np.meshgrid(x, y)
 
 # Super-Gaussian profile parameters
 m = 16  # Super-Gaussian exponent
-A = 100  # Super-Gaussian amplitude
 w0 = L/6  # Super-Gaussian width
 
 # Generate super-Gaussian profile
-target = A * np.exp(-(np.abs(X)/w0)**(2*m)) * np.exp(-(np.abs(Y)/(w0/4))**(2*m))
+target = np.square(np.exp(-(np.abs(X)/w0)**(2*m)) * np.exp(-(np.abs(Y)/(w0/4))**(2*m)))
 
 # Gaussian beam parameters
 w0 = L/6  # Gaussian beam waist radius
@@ -53,7 +52,7 @@ initial_profile_tf = tf.convert_to_tensor(initial_profile, dtype=tf.complex64)
 DOEphase = tf.exp(complex_one * tf.cast(DOE_tf, tf.complex64))
 
 iterf = tf.signal.fft2d(initial_profile_tf * tf.cast(DOEphase, dtype=tf.complex64))
-intf = tf.abs(iterf) / tf.reduce_max(tf.abs(iterf))
+intf = tf.square(tf.abs(iterf)) / tf.reduce_max(tf.square(tf.abs(iterf)))
 differences = target_tf - intf
 squaredDifferences = tf.square(differences)
 meanSquaredDifferences = tf.reduce_mean(squaredDifferences)
@@ -152,15 +151,14 @@ for i in range(num_iterations):
         tape.watch(variables)
         
         # if i%2 == 1:
-        #     cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))),pp+2))
-        #     # cost += feature_difference            
+        cost = tf.reduce_sum(tf.pow(target_tf - tf.square(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64)))))/ tf.reduce_max(tf.square(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64)))))),pp+2))
+            # cost += feature_difference            
                         
         # else :
         #     # costType == 2:
         #     # cost, squaredDiff = costFn(variables)
-        #     cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))),pp))
-
-        cost = costFn2017(variables)
+        #     cost = tf.reduce_sum(tf.pow(target_tf - tf.square(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64)))))/ tf.reduce_max(tf.square(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64)))))),pp))
+        # # cost = costFn2017(variables)
            
                         
     gradients = tape.gradient(cost, variables)
@@ -183,7 +181,7 @@ for i in range(num_iterations):
     # show training Tophat
 
     # inspect smoother 
-    plt.imshow(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))/ tf.reduce_max(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64))))))
+    plt.imshow(target_tf - tf.square(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64)))))/ tf.reduce_max(tf.square(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64)))))))
     plt.title('Training Data')
     plt.axis('image')
     plt.colorbar(shrink=0.5)
