@@ -38,9 +38,6 @@ DOE = torch.from_numpy(np.load('DOE_data.npy')).float()
 target = torch.from_numpy(target).float()
 initial_profile = torch.from_numpy(initial_profile).float()
 
-# Convert DOE tensor to complex type
-DOE = DOE.view(-1, 2)
-DOE = torch.complex(DOE[:, 0], DOE[:, 1])
 
 
 target = target.unsqueeze(0).unsqueeze(0)
@@ -56,7 +53,7 @@ variables = torch.nn.Parameter(DOE)
 def costFn(variables):
     # Perform the desired calculations using PyTorch tensor operations
    
-    cost = torch.sum(torch.pow(target - torch.square(torch.abs(torch.fft.fft2(initial_profile * torch.exp(1j * variables)))), pp), dim=(2, 3))
+    cost = torch.sum(torch.pow(target - torch.square(torch.abs(torch.fft.fft2(initial_profile * torch.exp(1j * variables)))), pp))
     return cost
 
 # Define the conjugate gradient optimization method
@@ -89,23 +86,15 @@ variables = conjugate_gradient(costFn, variables, max_iter=max_iterations, toler
 # Plot the cost and the image (similar to your original code)
 # ...
 # Plot the cost function
-plt.subplot(121)
-plt.plot(range(len(costFn)), costFn)
-plt.xlabel('Iteration')
-plt.ylabel('Cost')
-plt.title('Cost Function')
+# cost = torch.sum(torch.pow(target - torch.square(torch.abs(torch.fft.fft2(initial_profile * torch.exp(1j * variables)))), pp))
+# print (cost)
+print (initial_profile *torch.exp(1j * variables))
 
-# Plot the image
-plt.subplot(122)
-# show training Tophat
+Result = torch.square(torch.abs(torch.fft.fft2(initial_profile * torch.exp(1j * variables)))).detach().numpy()
+tensor_np = Result.squeeze()
 
-# inspect smoother 
-plt.imshow(torch.square(torch.abs(torch.fft.fft2(initial_profile * torch.exp(1j * variables)))) / torch.max(torch.square(torch.abs(torch.fft.fft2(initial_profile * torch.exp(1j * variables))))))
-plt.title('Training Data')
-plt.axis('image')
-plt.colorbar(shrink=0.5)
-# Display the plot
-display.clear_output(wait=True)
-display.display(plt.gcf())
-# Save or display the optimized profile
-# ...
+plt.imshow(tensor_np)
+plt.colorbar()
+plt.show()
+
+
