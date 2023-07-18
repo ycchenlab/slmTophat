@@ -53,7 +53,8 @@ variables = torch.nn.Parameter(DOE)
 def costFn(variables):
     # Perform the desired calculations using PyTorch tensor operations
    
-    cost = torch.sum(torch.pow(target - torch.square(torch.abs(torch.fft.fft2(initial_profile * torch.exp(1j * variables)))), pp))
+    cost = torch.sum(torch.pow(target - torch.abs(torch.fft.fft2(initial_profile * torch.exp(1j * variables)))/torch.max(torch.abs(torch.fft.fft2(initial_profile * torch.exp(1j * variables)))), pp))
+    print (cost)
     return cost
 
 # Define the conjugate gradient optimization method
@@ -62,7 +63,7 @@ def conjugate_gradient(costFn, variables, max_iter=100, tolerance=1e-6):
     b = -torch.autograd.grad(costFn(variables), variables)[0]
     p = b.clone()
     r = b.clone()
-
+    i=0
     for i in range(max_iter):
         Ap = torch.autograd.grad(costFn(variables), variables, create_graph=True)[0]
         alpha = torch.sum(r * r) / torch.sum(p * Ap)
@@ -71,7 +72,8 @@ def conjugate_gradient(costFn, variables, max_iter=100, tolerance=1e-6):
 
         if torch.norm(new_r) < tolerance:
             break
-
+        
+        print (i)
         beta = torch.sum(new_r * new_r) / torch.sum(r * r)
         p = new_r + beta * p
         r = new_r
@@ -88,9 +90,8 @@ variables = conjugate_gradient(costFn, variables, max_iter=max_iterations, toler
 # Plot the cost function
 # cost = torch.sum(torch.pow(target - torch.square(torch.abs(torch.fft.fft2(initial_profile * torch.exp(1j * variables)))), pp))
 # print (cost)
-print (initial_profile *torch.exp(1j * variables))
 
-Result = torch.square(torch.abs(torch.fft.fft2(initial_profile * torch.exp(1j * variables)))).detach().numpy()
+Result = (torch.abs(torch.fft.fft2(initial_profile * torch.exp(1j * variables)))/torch.max(torch.abs(torch.fft.fft2(initial_profile * torch.exp(1j * variables))))).detach().numpy()
 tensor_np = Result.squeeze()
 
 plt.imshow(tensor_np)
