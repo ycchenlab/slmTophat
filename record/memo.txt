@@ -1,0 +1,20 @@
+plot_01: target's w0 from L/6 to L/24 , learn rate from 0.01 to 0.05 (iteration = 30)
+plot_02: initial's w0 from L/6 to L/24, learn rate from 0.01 to 0.05  (iteration = 10)
+plot_03: initial's w0 from L/6 to L/24 (iteration = 10, learn rate 0.01)
+
+
+plot_04: 
+Optimizer- Adagrad
+cost function- from 5000 to 468 (RMSE: 0.0434) ->almost limitation
+iteration- 50~10
+learning rate- from 0.01 to 0.0001
+
+---
+CHANGE COST FUNCTION
+
+Result: only the suitable cost functions can work
+---
+plot_05:
+the same as 04
+adjusting learning rate and iteration
+cost function value- 394 (RMSE: 0.0394)

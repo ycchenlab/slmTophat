@@ -28,7 +28,7 @@ def costfunction(DOE, target, initial_profile, N, t, LR, costType):
     DOE_tf = tf.math.real(DOE_tf)
     variables = tf.Variable(DOE_tf)
     learning_rate=LR
-    optimizer = tf.optimizers.SGD(learning_rate)
+    optimizer = tf.optimizers.Adagrad(learning_rate)
     
     
     def costFnSmoothing (variables):
@@ -63,6 +63,11 @@ def costfunction(DOE, target, initial_profile, N, t, LR, costType):
 
     def costFnSimple (variables):
         cost = tf.reduce_sum(tf.pow(target_tf - tf.abs(tf.square(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64)))))/ tf.reduce_max(tf.square(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64)))))), pp))
+
+        return cost
+    def costsimpletime (variables):
+        male = 1
+        cost = tf.reduce_sum(tf.exp(1/100*tf.pow(target_tf - tf.abs(tf.square(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64)))))/ tf.reduce_max(tf.square(tf.abs(tf.signal.fft2d(initial_profile_tf * tf.exp(complex_one * tf.cast(variables, tf.complex64)))))), pp)))
 
         return cost
 
@@ -106,10 +111,14 @@ def costfunction(DOE, target, initial_profile, N, t, LR, costType):
                 else:
                     pp = 2    
                     cost = costFnSimple(variables)   
-                        
+                     
+            elif costType ==6:
+                pp = 2
+                cost = costsimpletime(variables)
+                
             gradients = tape.gradient(cost, variables)
             gradients = tf.reshape(gradients,(N,N))
-            
+            print(gradients)
     # Perform optimization
         optimizer.apply_gradients([(gradients, variables)])
         cost_values.append(cost.numpy())
@@ -136,7 +145,7 @@ def get_file_creation_time(file_path):
 
 def converter():
         # Folder path containing the images
-    folder_path = 'C:/git repo/slmTophat/tempPNG'
+    folder_path = 'C:/Users/ycche/git repo/slmTophat/tempPNG'
     
     # List to store image file names
     image_files = []

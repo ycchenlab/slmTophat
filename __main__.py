@@ -8,6 +8,7 @@ import imageio
 import time
 import os
 import shutil
+from cv2 import imread, IMREAD_GRAYSCALE
 
 
 # ===================================== Parameters config ===============================================
@@ -22,7 +23,7 @@ X, Y = np.meshgrid(x, y)
 
 
 # Super-Gaussian profile parameters
-m = 16  # Super-Gaussian exponent
+m = 10  # Super-Gaussian exponent
 A = 100  # Super-Gaussian amplitude
 w0 = L/6  # Super-Gaussian width
 
@@ -39,16 +40,17 @@ initial_profile = np.exp(-((R/w0)**2))
 target /= np.max(target)  # Normalize matrix
 
 # Defining DOE phase
-DOE = np.load('DOE_data.npy')
 
-s = 30
+#DOE = np.random.rand(N,N)*2*np.pi
+DOE = np.load('DOE_data.npy')
+s = 10
 
 # Create an empty list to store frames
 frames = []
 
 # costType: 1 = simple cost function(Ct2), 2 = smoothing neighbor pixels(Cs), 3 = alternating Ct4 / Cs, 4 = alternating Ct2 / Cs, 5 = Ct4 / Ct2
 costType = 1
-learning_rate=0.01
+learning_rate=0.0001
 
 # ===================================== Parameters config ===============================================
 
@@ -67,9 +69,11 @@ for t in range(s):
     A = target * np.exp(1j * angf)
 
     # Backward iteration
+    '''
     iterb = ifft2(A)
     angb = np.angle(iterb)
     DOE = angb
+    '''
     error = target - intf # Calculate error
     E = np.sum(np.abs(error)) / (N * N)
     differences = target - intf
@@ -85,7 +89,7 @@ for t in range(s):
 
     rmse = np.sqrt(meanSquaredDifferences)
     
-    if E < 0.005:
+    if E < 0.0005:
         iteration = t
         break
     
@@ -112,7 +116,7 @@ for t in range(s):
     plt.title('Training Tophat')
     plt.annotate(text, xy=(0.05, 0.8), xycoords='axes fraction', color='white', fontsize=7, weight='bold')
     # Save the figure as an image    
-    save_path = r'C:\git repo\slmTophat\tempPNG\\'
+    save_path = r'C:\Users\ycche\git repo\slmTophat\tempPNG\\'
     filename = f'plot_{t}.png'
     plt.savefig(save_path + filename, dpi = 300)
     # Convert the plot to an image array
@@ -132,16 +136,16 @@ for t in range(s):
 # save DOE data for next time use
 np.save('DOE_data.npy', DOE)
 
-
+'''
 # Specify the source file path
-source_path = "C:/git repo/slmTophat/tempPNG/plot_29.png"  # Replace with the actual path of the source file
+source_path = "C:/Users/ycche/git repo/slmTophat/tempPNG/plot_29.png"  # Replace with the actual path of the source file
 
 # Specify the destination directory
-destination_directory = "C:/git repo/slmTophat/IntensityModifiedCostFunction/"  # Replace with the actual path of the destination directory
+destination_directory = "C:/Users/ycche/git repo/slmTophat/IntensityModifiedCostFunction/"  # Replace with the actual path of the destination directory
 
 # Copy the file
 shutil.copy(source_path, destination_directory)
 
-
+'''
 # Save the frames as mp4
 converter()

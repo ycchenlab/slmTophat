@@ -11,7 +11,7 @@ def get_file_creation_time(file_path):
     
 
     # Folder path containing the images
-folder_path = 'C:/git repo/slmTophat/tempPNG'
+folder_path = 'C:/Users/ycche/git repo/slmTophat/tempPNG'
 
 # List to store image file names
 image_files = []
