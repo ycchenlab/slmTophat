@@ -23,12 +23,13 @@ X, Y = np.meshgrid(x, y)
 
 
 # Super-Gaussian profile parameters
-m = 10  # Super-Gaussian exponent
+mx = 3  # Super-Gaussian exponent
+my = 1
 A = 100  # Super-Gaussian amplitude
 w0 = L/6  # Super-Gaussian width
 
 # Generate super-Gaussian profile -- it is intensity
-target = np.square(A * np.exp(-(np.abs(X)/w0)**(2*m)) * np.exp(-(np.abs(Y)/(w0/4))**(2*m)))
+target = np.square(A * np.exp(-(np.abs(X)/w0)**(2*mx)) * np.exp(-(np.abs(Y)/(w0/4))**(2*my)))
 
 # Gaussian beam parameters
 w0 = L/6  # Gaussian beam waist radius
@@ -50,7 +51,7 @@ frames = []
 
 # costType: 1 = simple cost function(Ct2), 2 = smoothing neighbor pixels(Cs), 3 = alternating Ct4 / Cs, 4 = alternating Ct2 / Cs, 5 = Ct4 / Ct2
 costType = 1
-learning_rate=0.0001
+learning_rate=0.005
 
 # ===================================== Parameters config ===============================================
 
@@ -135,7 +136,10 @@ for t in range(s):
 
 # save DOE data for next time use
 np.save('DOE_data.npy', DOE)
-
+plt.imshow(target)
+plt.close()
+plt.imshow(initial_profile)
+plt.close()
 '''
 # Specify the source file path
 source_path = "C:/Users/ycche/git repo/slmTophat/tempPNG/plot_29.png"  # Replace with the actual path of the source file
